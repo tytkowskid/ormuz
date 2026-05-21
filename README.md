@@ -11,4 +11,4 @@ Przykład agenta
 ```
 python main.py
 ```
-Dane które bierze pod uwagę model są w TradeSignal i to jest TypedDict, ale w sumie nie musi na razie być więc jak coś zmieniasz to signal = zwykły słownik zadziała, a jak nie to zmienić w trade_signal.py
+Dane które bierze pod uwagę model są w TradeSignal i to jest TypedDict, ale w sumie nie musi na razie być więc jak coś zmieniasz w examples.py signal = zwykły słownik zadziała, a jak nie to zmienić w trade_signal.py
