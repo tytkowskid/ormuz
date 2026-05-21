@@ -1,5 +1,7 @@
 # Python Environment
 .ormuz-env
+__pycache__/
+*.pyc
 
 # pyenv
 .python-version
