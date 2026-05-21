@@ -1,5 +1,8 @@
 from langchain_openai import ChatOpenAI
 
-standard_model = ChatOpenAI(
-    model="gpt-4.1-mini"
-)
+def get_standard_model():
+
+    return ChatOpenAI(
+        model="gpt-4.1-mini",
+        temperature=0
+    )

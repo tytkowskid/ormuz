@@ -1,5 +1,8 @@
 # Python Environment
 .ormuz-env
 
+# pyenv
+.python-version
+
 # Env variables
 .env
