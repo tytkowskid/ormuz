@@ -5,7 +5,7 @@ Do odpalenia servera
 ```
 python .\server\broker-server.py
 ```
-W broker-server jest dict z przykładowymi cenami i początkową kasą jak coś to zmieniać tam
+W server/broker-server.py jest dict z przykładowymi cenami i początkową kasą jak coś to zmieniać tam
 
 Przykład agenta
 ```
