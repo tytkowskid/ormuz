@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
 import random
 
+import pandas as pd
+from pathlib import Path
+
 app = Flask(__name__)
 
 # Simple in memory portfolio
 portfolio = {
-    "cash": 10000,
+    "cash": 100000000000,
     "stocks": {}
 }
 
@@ -15,6 +18,17 @@ prices = {
     "GOOG": 170,
     "TSLA": 200
 }
+
+def _load_price(ticker: str, date: str) -> float | None:
+    path = Path("data/prices") / f"{ticker}.csv"
+    if not path.exists():
+        return None
+    df = pd.read_csv(path)
+    df.columns = [c.strip().lower() for c in df.columns]
+    df["date"] = pd.to_datetime(df["date"])
+    df["close"] = pd.to_numeric(df["close"], errors="coerce")
+    row = df[df["date"] <= pd.to_datetime(date)].dropna(subset=["close"])
+    return float(row.iloc[-1]["close"]) if not row.empty else None
 
 # GET portfolio
 @app.route("/portfolio", methods=["GET"])
@@ -46,8 +60,11 @@ def buy_stock():
 
     if ticker not in prices:
         return jsonify({"error": "Unknown ticker"}), 404
+    
+    date = data.get("date")
+    price = _load_price(ticker, date) if date else prices[ticker]
 
-    cost = prices[ticker] * quantity
+    cost = price * quantity
 
     if portfolio["cash"] < cost:
         return jsonify({"error": "Not enough cash"}), 400
@@ -76,8 +93,11 @@ def sell_stock():
 
     if owned < quantity:
         return jsonify({"error": "Not enough shares"}), 400
+    
+    date = data.get("date")  # caller must send this
+    price = _load_price(ticker, date) if date else prices[ticker]
 
-    revenue = prices[ticker] * quantity
+    revenue = price * quantity
 
     portfolio["stocks"][ticker] -= quantity
     portfolio["cash"] += revenue

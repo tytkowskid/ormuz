@@ -4,7 +4,7 @@ from src.trading_executor import TradingExecutor
 executor = TradingExecutor("http://127.0.0.1:5000")
 
 @tool
-def buy_stock(ticker: str, quantity: int):
+def buy_stock(ticker: str, quantity: int, date: str):
 
     """
     Execute a stock purchase.
@@ -12,12 +12,13 @@ def buy_stock(ticker: str, quantity: int):
 
     return executor.buy_stock(
         ticker,
-        quantity
+        quantity,
+        date
     )
 
 
 @tool
-def sell_stock(ticker: str, quantity: int):
+def sell_stock(ticker: str, quantity: int, date: str):
 
     """
     Execute a stock sale.
@@ -25,5 +26,6 @@ def sell_stock(ticker: str, quantity: int):
 
     return executor.sell_stock(
         ticker,
-        quantity
+        quantity,
+        date
     )
