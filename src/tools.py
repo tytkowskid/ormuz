@@ -1,7 +1,12 @@
 from langchain.tools import tool
 from src.trading_executor import TradingExecutor
 
-executor = TradingExecutor("http://127.0.0.1:5000")
+# The LLM agent pipeline always trades through the "agent" portfolio, so its
+# performance metrics (see src/performance.py) can be fetched with
+# TradingExecutor("http://127.0.0.1:5000", portfolio_id="agent").get_metrics()
+# and compared directly against the Buy & Hold / Random Trade baselines,
+# which trade through their own portfolio_ids (see src/baselines.py).
+executor = TradingExecutor("http://127.0.0.1:5000", portfolio_id="agent")
 
 @tool
 def buy_stock(ticker: str, quantity: int, date: str):
