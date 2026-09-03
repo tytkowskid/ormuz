@@ -1,7 +1,8 @@
+import json
+
 from langchain.agents import create_agent
 from src.tools import buy_stock, sell_stock
 from src.models import get_standard_model
-from src.trade_signal import TradeSignal
 from langchain_core.messages import AIMessage
 
 basic_system_prompt="""
@@ -31,21 +32,21 @@ def example_buy_reasoning():
                          system_prompt=basic_system_prompt)
     
     # Structured input
-    signal = TradeSignal(
-        ticker="AAPL",
-        action="buy",
-        proposed_quantity=10,
-        price=185.4,
-        rsi=28.5,
-        volatility=0.22,
-        current_exposure=0.31
-    )
+    signal = {
+        "ticker": "AAPL",
+        "action": "buy",
+        "proposed_quantity": 10,
+        "price": 185.4,
+        "rsi": 28.5,
+        "volatility": 0.22,
+        "current_exposure": 0.31,
+    }
 
     response = agent.invoke({
         "messages": [
             {
                 "role": "user",
-                "content": signal.model_dump_json(indent=2)
+                "content": json.dumps(signal, indent=2)
             }
         ]
     })

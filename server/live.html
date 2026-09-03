@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ormuz — Live Agent View</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a21; --panel2:#1c222c; --line:#2a313d;
+    --text:#e6e9ef; --muted:#8b95a5; --accent:#5b9dff;
+    --fundamentals:#3ecf8e; --sentiment:#e5b567; --indicators:#4dd0e1;
+    --orchestrator:#b088f9; --trader:#5b9dff; --risk:#ff6b6b; --system:#7c8797;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       background:var(--bg);color:var(--text)}
+  header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+         padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0 8px 0 0;font-weight:700;letter-spacing:.3px}
+  header input{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+               border-radius:6px;padding:5px 8px;font:inherit}
+  header input#ticker{width:74px;text-transform:uppercase}
+  header input#start{width:120px}
+  header input#days{width:52px}
+  header input#model{width:180px}
+  button{background:var(--accent);color:#06121f;border:0;border-radius:6px;padding:6px 14px;
+         font:inherit;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .dot{width:9px;height:9px;border-radius:50%;background:#666;display:inline-block;margin-right:5px}
+  .dot.on{background:var(--fundamentals)} .dot.off{background:var(--risk)}
+  .status{color:var(--muted);font-size:12px}
+  .filters{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);
+           display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .filters label{display:flex;gap:5px;align-items:center;cursor:pointer;user-select:none}
+  #feed{max-width:1000px;margin:0 auto;padding:18px 14px 140px}
+  .divider{display:flex;align-items:center;gap:12px;margin:26px 0 14px;color:var(--muted);
+           font-weight:700;letter-spacing:1px;font-size:12px;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sys{color:var(--system);font-size:12px;margin:8px 0;text-align:center}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--system);
+        border-radius:8px;padding:10px 12px;margin:8px 0}
+  .card .meta{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
+  .agent{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:0 7px}
+  .time{margin-left:auto;font-size:11px;color:var(--muted)}
+  .body{white-space:pre-wrap;word-break:break-word}
+  .body.tool{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#cdd6e2}
+  details summary{cursor:pointer;color:var(--muted);font-size:12px}
+  details[open] summary{margin-bottom:6px}
+  .chiprow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:12px}
+  .highlight{border-left-color:var(--orchestrator);background:#1a1726}
+  .concl{border-left-color:var(--trader);background:#141b28}
+  .err{border-left-color:var(--risk);background:#241618}
+  table.results{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+  table.results th,table.results td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+  /* agent accents */
+  .a-fundamentals{border-left-color:var(--fundamentals)} .a-fundamentals .agent{color:var(--fundamentals)}
+  .a-sentiment{border-left-color:var(--sentiment)}       .a-sentiment .agent{color:var(--sentiment)}
+  .a-indicators{border-left-color:var(--indicators)}     .a-indicators .agent{color:var(--indicators)}
+  .a-orchestrator{border-left-color:var(--orchestrator)} .a-orchestrator .agent{color:var(--orchestrator)}
+  .a-trader{border-left-color:var(--trader)}             .a-trader .agent{color:var(--trader)}
+  .a-risk{border-left-color:var(--risk)}                 .a-risk .agent{color:var(--risk)}
+</style>
+</head>
+<body>
+<header>
+  <h1>ORMUZ · LIVE AGENTS</h1>
+  <input id="ticker" value="TSLA" title="Ticker">
+  <input id="start" value="2019-06-01" title="Start date (YYYY-MM-DD)">
+  <input id="days" type="number" min="1" max="60" value="3" title="Trading days">
+  <input id="model" value="openai:gpt-4.1-mini" title="init_chat_model id">
+  <button id="run">Run</button>
+  <span class="status"><span id="dot" class="dot"></span><span id="conn">connecting…</span></span>
+</header>
+
+<div class="filters" id="filters">
+  <label><input type="checkbox" data-agent="fundamentals" checked> fundamentals</label>
+  <label><input type="checkbox" data-agent="sentiment" checked> sentiment</label>
+  <label><input type="checkbox" data-agent="indicators" checked> indicators</label>
+  <label><input type="checkbox" data-agent="orchestrator" checked> orchestrator</label>
+  <label><input type="checkbox" data-agent="trader" checked> trader</label>
+  <label><input type="checkbox" data-agent="risk" checked> risk</label>
+  <label style="margin-left:auto"><input type="checkbox" id="showtools" checked> tool I/O</label>
+  <label><input type="checkbox" id="showinputs"> agent inputs</label>
+</div>
+
+<div id="feed"></div>
+
+<script>
+(function(){
+  const feed = document.getElementById('feed');
+  const dot = document.getElementById('dot');
+  const conn = document.getElementById('conn');
+  const runBtn = document.getElementById('run');
+  const events = [];
+  const seen = new Set();
+
+  const agentFilter = {};
+  document.querySelectorAll('#filters input[data-agent]').forEach(cb=>{
+    agentFilter[cb.dataset.agent] = cb.checked;
+    cb.addEventListener('change',()=>{agentFilter[cb.dataset.agent]=cb.checked;render();});
+  });
+  document.getElementById('showtools').addEventListener('change',render);
+  document.getElementById('showinputs').addEventListener('change',render);
+
+  function fmtTime(t){
+    const d = new Date(t*1000);
+    return d.toLocaleTimeString([], {hour12:false}) + '.' + String(d.getMilliseconds()).padStart(3,'0');
+  }
+  function nearBottom(){ return window.innerHeight + window.scrollY >= document.body.scrollHeight - 120; }
+  function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+
+  function card(ev, {cls='', title='', body='', mono=false}={}){
+    const c = el('div','card '+(ev.agent?('a-'+ev.agent):'')+' '+cls);
+    const meta = el('div','meta');
+    meta.appendChild(el('span','agent', (ev.agent||'system')));
+    if(title) meta.appendChild(el('span','tag',title));
+    meta.appendChild(el('span','time', fmtTime(ev.t)));
+    c.appendChild(meta);
+    if(body){
+      const b = el('div','body'+(mono?' tool':''));
+      b.textContent = body;
+      c.appendChild(b);
+    }
+    return c;
+  }
+  function collapsible(ev,{cls='',title='',summary='',body='',mono=true}={}){
+    const c = card(ev,{cls,title});
+    const d = el('details');
+    d.appendChild(el('summary',null,summary));
+    const b = el('div','body'+(mono?' tool':''));
+    b.textContent = body;
+    d.appendChild(b);
+    c.appendChild(d);
+    return c;
+  }
+
+  function nodeFor(ev){
+    const showTools = document.getElementById('showtools').checked;
+    const showInputs = document.getElementById('showinputs').checked;
+    if(ev.agent && agentFilter[ev.agent] === false) return null;
+
+    switch(ev.kind){
+      case 'run_requested':
+        return el('div','sys', `▶ pipeline · ${ev.ticker} · ${ev.start_date||''} · ${ev.num_days||''} day(s) · ${ev.model||''}`);
+      case 'pipeline_start':
+        return null;
+      case 'day_start':
+        return el('div','divider', `Day ${ev.date}  ·  exposure ${(100*(ev.exposure||0)).toFixed(1)}%`);
+      case 'analysts_dispatched':
+        return el('div','sys','⇉ dispatching fundamentals · sentiment · indicators (parallel)');
+      case 'input':
+        if(!showInputs) return null;
+        return collapsible(ev,{title:'received', summary:'input ('+ev.content.length+' chars)', body:ev.content});
+      case 'llm_start':
+        return null;
+      case 'message':
+        return card(ev,{title:'says', body:ev.content});
+      case 'tool_call':
+        if(!showTools) return null;
+        return card(ev,{title:'tool call', mono:true,
+          body:`${ev.tool}(${ev.args?JSON.stringify(ev.args):''})`});
+      case 'tool_start':
+        if(!showTools) return null;
+        return collapsible(ev,{title:'tool ▸ '+(ev.tool||''), summary:'input', body:ev.input||''});
+      case 'tool_end':
+        if(!showTools) return null;
+        return collapsible(ev,{title:'tool result', summary:'output ('+(ev.output||'').length+' chars)', body:ev.output||''});
+      case 'analyst_report': {
+        ev = Object.assign({}, ev, {agent: ev.name ? ev.name.toLowerCase() : ev.agent});
+        if(ev.agent && agentFilter[ev.agent] === false) return null;
+        if(ev.error) return card(ev,{cls:'err',title:'report failed',body:ev.error});
+        return card(ev,{title:'analyst report',body:ev.content});
+      }
+      case 'portfolio_context': {
+        const row = el('div','chiprow');
+        row.appendChild(el('span','chip',`price ${Number(ev.price).toFixed(2)}`));
+        row.appendChild(el('span','chip',`vol ${Number(ev.volatility).toFixed(4)}`));
+        row.appendChild(el('span','chip',`exposure ${(100*ev.exposure).toFixed(1)}%`));
+        row.appendChild(el('span','chip',`portfolio $${Number(ev.portfolio_value).toLocaleString()}`));
+        return row;
+      }
+      case 'brief':
+        return card({agent:'orchestrator',t:ev.t},{cls:'highlight',title:'market brief',body:ev.content});
+      case 'day_complete':
+        return card({agent:'trader',t:ev.t},{cls:'concl',title:'conclusion',
+          body:`${ev.conclusion}\n\n(exposure → ${(100*(ev.exposure||0)).toFixed(1)}%)`});
+      case 'error':
+        return card(ev,{cls:'err',title:'error',body:ev.error});
+      case 'pipeline_complete': {
+        const c = card({agent:'system',t:ev.t},{title:'pipeline complete'});
+        const tbl = el('table','results');
+        const head = el('tr'); ['date','exposure','conclusion / error'].forEach(h=>head.appendChild(el('th',null,h)));
+        tbl.appendChild(head);
+        (ev.results||[]).forEach(r=>{
+          const tr = el('tr');
+          tr.appendChild(el('td',null,r.date||''));
+          tr.appendChild(el('td',null, r.exposure!=null?(100*r.exposure).toFixed(1)+'%':'—'));
+          tr.appendChild(el('td',null, r.conclusion||r.error||''));
+          tbl.appendChild(tr);
+        });
+        c.appendChild(tbl);
+        return c;
+      }
+      case 'pipeline_stopped':
+        runBtn.disabled = false;
+        return el('div','sys','■ run finished');
+      default:
+        return null;
+    }
+  }
+
+  function render(){
+    const stick = nearBottom();
+    feed.innerHTML = '';
+    for(const ev of events){
+      const n = nodeFor(ev);
+      if(n) feed.appendChild(n);
+    }
+    if(stick) window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  function add(ev){
+    if(seen.has(ev.seq)) return;
+    seen.add(ev.seq);
+    events.push(ev);
+    const n = nodeFor(ev);
+    if(n){
+      const stick = nearBottom();
+      feed.appendChild(n);
+      if(stick) window.scrollTo(0, document.body.scrollHeight);
+    }
+  }
+
+  // -------- websocket ----------
+  function connect(){
+    const ws = new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws');
+    ws.onopen = ()=>{ dot.className='dot on'; conn.textContent='connected'; };
+    ws.onclose = ()=>{ dot.className='dot off'; conn.textContent='disconnected — retrying'; setTimeout(connect,1500); };
+    ws.onmessage = (m)=>{ try{ add(JSON.parse(m.data)); }catch(e){} };
+  }
+  connect();
+
+  // -------- run ----------
+  runBtn.addEventListener('click', async ()=>{
+    runBtn.disabled = true;
+    events.length = 0; seen.clear(); feed.innerHTML='';
+    const payload = {
+      ticker: document.getElementById('ticker').value,
+      start_date: document.getElementById('start').value,
+      num_days: Number(document.getElementById('days').value),
+      model_name: document.getElementById('model').value,
+    };
+    try{
+      const r = await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(!r.ok){
+        const j = await r.json().catch(()=>({}));
+        feed.appendChild(el('div','sys','⚠ '+(j.error||('HTTP '+r.status))));
+        runBtn.disabled = false;
+      }
+    }catch(e){
+      feed.appendChild(el('div','sys','⚠ '+e));
+      runBtn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

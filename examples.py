@@ -12,7 +12,7 @@ logging.basicConfig(
     format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
 )
 
-from .src.agents.orchestrator import run_pipeline
+from src.agents.orchestrator import run_pipeline
 
 
 def main():
@@ -21,6 +21,7 @@ def main():
             ticker     = "TSLA",
             start_date = "2019-06-01",
             num_days   = 3,
+            model_name="openai:gpt-4.1-mini"
         )
     )
     print("\n=== PIPELINE RESULTS ===")

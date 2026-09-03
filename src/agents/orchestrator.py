@@ -28,17 +28,18 @@ from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 
-from fundamentals_agent import create_fundamentals_analyst_agent
-from indicator_agent import create_indicators_analyst_agent
-from sentiment_agent import create_sentiment_analyst_agent
-from risk_agent import (
+from src.agents.fundamentals_agent import create_fundamentals_analyst_agent
+from src.agents.indicator_agent import create_indicators_analyst_agent
+from src.agents.sentiment_agent import create_sentiment_analyst_agent
+from src.agents.risk_agent import (
     PORTFOLIO_VALUE,
     create_risk_agent,
     get_price,
     get_volatility,
 )
-from trader_agent import create_trader_agent, run_trader
+from src.agents.trader_agent import create_trader_agent, run_trader
 from src.models import get_standard_model
+from src.streaming import emit, instrument
 
 load_dotenv()
 
@@ -146,6 +147,7 @@ def _make_collect_tool(
             query: Ignored. The ticker and date are already bound to this tool.
         """
         logger.info("[COLLECT] Running 3 analysts in parallel for %s on %s", ticker, curr_date)
+        emit("analysts_dispatched", date=curr_date, ticker=ticker)
 
         async def _run_all():
             return await asyncio.gather(
@@ -163,10 +165,12 @@ def _make_collect_tool(
             if isinstance(result, Exception):
                 logger.warning("[%s] agent error: %s", name, result)
                 parts.append(f"=== {name} ANALYST ===\nERROR: {result}\n")
+                emit("analyst_report", date=curr_date, name=name, error=str(result))
             else:
                 raw = result["messages"][-1].content
                 logger.info("[%s] raw output (first 200): %s", name, raw[:200])
                 parts.append(f"=== {name} ANALYST ===\n{raw}\n")
+                emit("analyst_report", date=curr_date, name=name, content=raw)
 
         price      = get_price(ticker, curr_date)
         volatility = get_volatility(ticker, curr_date)
@@ -180,6 +184,9 @@ def _make_collect_tool(
             f"Current exposure: {exposure:.2%} of portfolio\n"
             f"Portfolio value: ${PORTFOLIO_VALUE:,.0f}\n"
         )
+
+        emit("portfolio_context", date=curr_date, ticker=ticker, price=price,
+             volatility=volatility, exposure=exposure, portfolio_value=PORTFOLIO_VALUE)
 
         return "\n".join(parts) + portfolio_ctx
 
@@ -202,6 +209,7 @@ async def _run_day(
 ) -> tuple[str, float]:
 
     logger.info("=== DATE %s ===", curr_date)
+    emit("day_start", date=curr_date, ticker=ticker, exposure=exposure)
 
     # Build a fresh orchestrator agent with the day's bound tool
     collect_tool = _make_collect_tool(
@@ -211,10 +219,13 @@ async def _run_day(
         ticker, curr_date, exposure,
     )
 
-    orchestrator = create_agent(
-        model=orchestrator_model,
-        tools=[collect_tool],
-        system_prompt=ORCHESTRATOR_SYSTEM_PROMPT,
+    orchestrator = instrument(
+        create_agent(
+            model=orchestrator_model,
+            tools=[collect_tool],
+            system_prompt=ORCHESTRATOR_SYSTEM_PROMPT,
+        ),
+        "orchestrator",
     )
 
     orch_response = orchestrator.invoke({
@@ -229,6 +240,7 @@ async def _run_day(
 
     brief = orch_response["messages"][-1].content
     logger.info("[ORCHESTRATOR] Brief produced (%d chars)", len(brief))
+    emit("brief", date=curr_date, content=brief)
 
     # Pass brief to trader
     result = run_trader(trader_agent, brief, ticker, curr_date)
@@ -242,6 +254,7 @@ async def _run_day(
     elif "sell_stock" in conclusion.lower() or "sold" in conclusion.lower():
         new_exposure = max(0.0, exposure - (10 * price / PORTFOLIO_VALUE))
 
+    emit("day_complete", date=curr_date, conclusion=conclusion, exposure=new_exposure)
     return conclusion, new_exposure
 
 
@@ -269,6 +282,7 @@ async def run_pipeline(
     model_name: str = "openrouter:openai/gpt-oss-120b:free",
 ):
     logger.info("Pipeline start  ticker=%s  from=%s  days=%d", ticker, start_date, num_days)
+    emit("pipeline_start", ticker=ticker, start_date=start_date, num_days=num_days, model=model_name)
 
     analyst_model = init_chat_model(model_name, temperature=0.2)
     orchestrator_model = init_chat_model(model_name, temperature=0.1)
@@ -277,8 +291,12 @@ async def run_pipeline(
     sent_agent, sent_tools = create_sentiment_analyst_agent(analyst_model)
     ind_agent,  ind_tools  = create_indicators_analyst_agent(analyst_model)
 
-    risk_agent   = create_risk_agent(analyst_model)
-    trader_agent = create_trader_agent(analyst_model, risk_agent)
+    fund_agent = instrument(fund_agent, "fundamentals")
+    sent_agent = instrument(sent_agent, "sentiment")
+    ind_agent  = instrument(ind_agent,  "indicators")
+
+    risk_agent   = instrument(create_risk_agent(analyst_model), "risk")
+    trader_agent = instrument(create_trader_agent(analyst_model, risk_agent), "trader")
 
     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
     exposure = INITIAL_EXPOSURE
@@ -310,6 +328,7 @@ async def run_pipeline(
     for r in results:
         logger.info("  %s  exp=%.2f  conclusion: %s", r["date"], r.get("exposure", 0), r.get("conclusion", r.get("error", ""))[:120])
 
+    emit("pipeline_complete", results=results)
     return results
 
 

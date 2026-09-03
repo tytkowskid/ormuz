@@ -24,7 +24,7 @@ from functools import partial
 from langchain.agents import create_agent
 from langchain.tools import tool
 
-from risk_agent import (
+from src.agents.risk_agent import (
     PORTFOLIO_VALUE,
     create_risk_agent,
     get_price,
