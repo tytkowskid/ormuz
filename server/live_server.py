@@ -26,6 +26,7 @@ import sys
 import threading
 from pathlib import Path
 
+import tornado.httpclient
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
@@ -36,6 +37,9 @@ from src import streaming  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 PORT = int(os.environ.get("LIVE_PORT", "8765"))
+BROKER_URL = os.environ.get("BROKER_URL", "http://127.0.0.1:5000").rstrip("/")
+AGENT_PORTFOLIO = "agent"          # src/tools.py trades through this portfolio_id
+INITIAL_CASH = 100_000.0
 
 _run_lock = threading.Lock()
 _state = {"running": False}
@@ -45,9 +49,26 @@ _state = {"running": False}
 # PIPELINE RUNNER
 # ---------------------------------------------------------------------------
 
+def _reset_agent_portfolio() -> None:
+    """Wipe the agent portfolio's ledger so the Metrics tab reflects this run."""
+    try:
+        import requests
+
+        requests.post(
+            f"{BROKER_URL}/reset/{AGENT_PORTFOLIO}",
+            json={"cash": INITIAL_CASH},
+            timeout=5,
+        )
+        streaming.emit("metrics_reset", portfolio_id=AGENT_PORTFOLIO)
+    except Exception as exc:  # noqa: BLE001 - broker may just not be running
+        streaming.emit("error", agent="pipeline",
+                       error=f"could not reset broker portfolio: {exc}")
+
+
 def _run_pipeline_thread(ticker: str, start_date: str, num_days: int, model_name: str) -> None:
     from src.agents.orchestrator import run_pipeline
 
+    _reset_agent_portfolio()
     try:
         asyncio.run(run_pipeline(ticker, start_date, num_days, model_name=model_name))
     except Exception as exc:  # noqa: BLE001 - surface everything to the UI
@@ -100,6 +121,23 @@ class RunHandler(tornado.web.RequestHandler):
         self.write({"status": "started"})
 
 
+class MetricsHandler(tornado.web.RequestHandler):
+    """Proxy the broker's /metrics/<portfolio_id> (same origin -> no CORS)."""
+
+    async def get(self) -> None:
+        pid = self.get_argument("portfolio_id", AGENT_PORTFOLIO)
+        self.set_header("Content-Type", "application/json")
+        try:
+            resp = await tornado.httpclient.AsyncHTTPClient().fetch(
+                f"{BROKER_URL}/metrics/{pid}", request_timeout=5, raise_error=False,
+            )
+            self.set_status(resp.code if resp.code < 600 else 502)
+            self.write(resp.body or b"{}")
+        except Exception as exc:  # noqa: BLE001
+            self.set_status(502)
+            self.write({"error": f"broker unreachable at {BROKER_URL}: {exc}"})
+
+
 class EventSocket(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin: str) -> bool:  # noqa: ARG002 - local dev tool
         return True
@@ -134,6 +172,7 @@ def make_app() -> tornado.web.Application:
     return tornado.web.Application([
         (r"/", IndexHandler),
         (r"/run", RunHandler),
+        (r"/metrics", MetricsHandler),
         (r"/ws", EventSocket),
     ])
 

@@ -40,6 +40,7 @@ from src.agents.risk_agent import (
 from src.agents.trader_agent import create_trader_agent, run_trader
 from src.models import get_standard_model
 from src.streaming import emit, instrument
+from src.tools import executor  # shared broker client, portfolio_id="agent"
 
 load_dotenv()
 
@@ -73,6 +74,8 @@ def _analyst_prompt(ticker: str, curr_date: str, tool_names: str) -> dict:
             "content": (
                 f"Ticker: {ticker} | Date: {curr_date} | Tools: {tool_names}\n\n"
                 "Analyse only data up to and including the date above — no look-ahead.\n"
+                "For tools that take start_date/end_date, request about a 7-day window "
+                "ending on the date above (do not ask for more than 14 days).\n"
                 "Structure your response as:\n"
                 "FINDINGS: <2-4 sentences of key data points with actual values>\n"
                 "SIGNAL: BUY | SELL | HOLD\n"
@@ -253,6 +256,13 @@ async def _run_day(
         new_exposure = min(1.0, exposure + (10 * price / PORTFOLIO_VALUE))
     elif "sell_stock" in conclusion.lower() or "sold" in conclusion.lower():
         new_exposure = max(0.0, exposure - (10 * price / PORTFOLIO_VALUE))
+
+    # Daily mark-to-market so the equity curve (and therefore Sharpe / Max
+    # Drawdown / Cumulative Return) is populated even on HOLD days.
+    try:
+        executor.mark_to_market(curr_date, {ticker: price})
+    except Exception as exc:  # noqa: BLE001 - broker may not be running
+        logger.warning("[MARK] mark-to-market failed for %s: %s", curr_date, exc)
 
     emit("day_complete", date=curr_date, conclusion=conclusion, exposure=new_exposure)
     return conclusion, new_exposure

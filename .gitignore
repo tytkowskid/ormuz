@@ -8,3 +8,7 @@ __pycache__/
 
 # Env variables
 .env
+
+# Data dir
+data/
+scripts/

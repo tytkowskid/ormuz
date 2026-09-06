@@ -243,6 +243,11 @@ class PerformanceTracker:
             return self.equity_curve[-1].equity
         return self.cash
 
+    @property
+    def last_prices(self) -> dict[str, float]:
+        """Most recent price seen per ticker (from fills and mark-to-market)."""
+        return dict(self._last_prices)
+
     def cumulative_return(self) -> float:
         """Total portfolio gain vs. initial capital over the test window."""
         if self.initial_capital == 0:

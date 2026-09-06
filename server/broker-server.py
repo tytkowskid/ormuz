@@ -231,6 +231,8 @@ def get_metrics(portfolio_id):
         "fills": tracker.fills_as_dicts(),
         "closed_trades": tracker.closed_trades_as_dicts(),
         "equity_curve": tracker.equity_curve_as_dicts(),
+        "positions": p["stocks"],
+        "last_prices": tracker.last_prices,
     })
 
 

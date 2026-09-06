@@ -14,7 +14,8 @@
   *{box-sizing:border-box}
   body{margin:0;font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
        background:var(--bg);color:var(--text)}
-  header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+  #top{position:sticky;top:0;z-index:5}
+  header{background:var(--panel);border-bottom:1px solid var(--line);
          padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   header h1{font-size:14px;margin:0 8px 0 0;font-weight:700;letter-spacing:.3px}
   header input{background:var(--panel2);border:1px solid var(--line);color:var(--text);
@@ -32,6 +33,61 @@
   .filters{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);
            display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
   .filters label{display:flex;gap:5px;align-items:center;cursor:pointer;user-select:none}
+  body:not([data-tab="stream"]) .filters{display:none}
+
+  /* tabs */
+  #tabs{display:flex;gap:2px;align-items:center;background:var(--panel);border-bottom:1px solid var(--line);padding:0 10px}
+  #tabs button[data-tab]{background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:600;
+               border:0;border-bottom:2px solid transparent;border-radius:0;padding:7px 12px;
+               cursor:pointer;letter-spacing:.4px}
+  #tabs button[data-tab].active{color:var(--text);border-bottom-color:var(--accent)}
+  #pidwrap{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted)}
+  #pidwrap input{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:3px 7px;font:inherit;width:100px}
+  #pidwrap button{padding:4px 10px;font-size:11px}
+  body[data-tab="stream"] #pidwrap{display:none}
+
+  /* metrics + portfolio tabs */
+  #metrics,#portfolio{max-width:1000px;margin:0 auto;padding:16px 14px 80px}
+  .mcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .mcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .mcard .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .mcard .v{font-size:24px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .v.pos{color:var(--fundamentals)} .v.neg{color:var(--risk)} .v.dim{color:var(--muted)}
+  .msub{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+  .msub .chip .k{color:var(--muted);margin-right:5px}
+  .msection{margin-top:22px}
+  .msection h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 8px}
+  #equity{display:block;width:100%;height:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+  .eqcap{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+  table.mt{border-collapse:collapse;width:100%;font-size:12px}
+  table.mt th,table.mt td{border:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+  table.mt th:first-child,table.mt td:first-child{text-align:left}
+  table.mt td.pos{color:var(--fundamentals)} table.mt td.neg{color:var(--risk)}
+  .mempty{color:var(--muted);font-size:13px;padding:10px 0}
+
+  /* agent graph */
+  #graphwrap{background:var(--panel);border-bottom:1px solid var(--line);padding:4px 10px 8px}
+  #graphtoggle{background:none;border:0;color:var(--muted);font:inherit;font-size:11px;
+               cursor:pointer;padding:2px 0;letter-spacing:.5px}
+  #graph{display:block;width:100%;max-width:520px;height:118px;margin:2px auto 0}
+  #graphwrap.collapsed #graph{display:none}
+  .gedge{stroke:#3b4656;stroke-width:1;fill:none;transition:stroke-opacity .2s}
+  .gedge.flow{stroke-dasharray:5 4;animation:gflow .7s linear infinite}
+  @keyframes gflow{to{stroke-dashoffset:-18}}
+  .gnode{fill:currentColor;transition:opacity .18s;transform-box:fill-box;transform-origin:center}
+  .gring{fill:currentColor;pointer-events:none}
+  .gnode.awake{filter:drop-shadow(0 0 5px currentColor);animation:gpulse 1.1s ease-in-out infinite}
+  @keyframes gpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+  .glabel{fill:var(--muted);font-size:9px;font-family:inherit;pointer-events:none}
+  .gnode-fundamentals,.gring-fundamentals{color:var(--fundamentals)}
+  .gnode-sentiment,.gring-sentiment{color:var(--sentiment)}
+  .gnode-indicators,.gring-indicators{color:var(--indicators)}
+  .gnode-orchestrator,.gring-orchestrator{color:var(--orchestrator)}
+  .gnode-trader,.gring-trader{color:var(--trader)}
+  .gnode-risk,.gring-risk{color:var(--risk)}
+  .gnode-market,.gring-market{color:var(--system)}
+  @media (max-width:760px){#graphwrap{display:none}}
+
   #feed{max-width:1000px;margin:0 auto;padding:18px 14px 140px}
   .divider{display:flex;align-items:center;gap:12px;margin:26px 0 14px;color:var(--muted);
            font-weight:700;letter-spacing:1px;font-size:12px;text-transform:uppercase}
@@ -64,6 +120,7 @@
 </style>
 </head>
 <body>
+<div id="top">
 <header>
   <h1>ORMUZ · LIVE AGENTS</h1>
   <input id="ticker" value="TSLA" title="Ticker">
@@ -73,6 +130,18 @@
   <button id="run">Run</button>
   <span class="status"><span id="dot" class="dot"></span><span id="conn">connecting…</span></span>
 </header>
+
+<div id="tabs">
+  <button data-tab="stream" class="active">stream</button>
+  <button data-tab="metrics">metrics</button>
+  <button data-tab="portfolio">portfolio</button>
+  <span id="pidwrap">
+    portfolio_id
+    <input id="pid" value="agent" title="broker portfolio_id — agent, buy_and_hold, random, …">
+    <button id="pidrefresh">refresh</button>
+    <span id="pidstatus"></span>
+  </span>
+</div>
 
 <div class="filters" id="filters">
   <label><input type="checkbox" data-agent="fundamentals" checked> fundamentals</label>
@@ -85,7 +154,15 @@
   <label><input type="checkbox" id="showinputs"> agent inputs</label>
 </div>
 
+<div id="graphwrap">
+  <button id="graphtoggle">▾ agent graph</button>
+  <svg id="graph" viewBox="0 0 480 118" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+</div>
+
 <div id="feed"></div>
+<div id="metrics" hidden></div>
+<div id="portfolio" hidden></div>
 
 <script>
 (function(){
@@ -110,6 +187,116 @@
   }
   function nearBottom(){ return window.innerHeight + window.scrollY >= document.body.scrollHeight - 120; }
   function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+
+  // ---------------- agent graph ----------------
+  const G = {
+    nodes:{
+      fundamentals:{x:120,y:20, lx:-10,ly:3, anchor:'end'},
+      sentiment:   {x:82, y:59, lx:-10,ly:3, anchor:'end'},
+      indicators:  {x:120,y:98, lx:-10,ly:3, anchor:'end'},
+      orchestrator:{x:220,y:59, lx:0,  ly:17,anchor:'middle'},
+      trader:      {x:330,y:59, lx:0,  ly:17,anchor:'middle'},
+      risk:        {x:424,y:30, lx:10, ly:3, anchor:'start'},
+      market:      {x:424,y:92, lx:10, ly:3, anchor:'start'},
+    },
+    edges:[
+      ['orchestrator','fundamentals'],['orchestrator','sentiment'],['orchestrator','indicators'],
+      ['orchestrator','trader'],['trader','risk'],['trader','market'],
+    ],
+  };
+  const NS='http://www.w3.org/2000/svg';
+  const gsvg=document.getElementById('graph');
+  const gNodeEl={}, gRingEl={}, gEdgeEl={};
+  const gTs={nodes:{},edges:{}};
+
+  (function buildGraph(){
+    G.edges.forEach(([a,b])=>{
+      const l=document.createElementNS(NS,'line');
+      l.setAttribute('x1',G.nodes[a].x); l.setAttribute('y1',G.nodes[a].y);
+      l.setAttribute('x2',G.nodes[b].x); l.setAttribute('y2',G.nodes[b].y);
+      l.setAttribute('class','gedge');
+      gsvg.appendChild(l); gEdgeEl[a+'~'+b]=l;
+    });
+    Object.entries(G.nodes).forEach(([k,n])=>{
+      const ring=document.createElementNS(NS,'circle');
+      ring.setAttribute('cx',n.x); ring.setAttribute('cy',n.y); ring.setAttribute('r',6);
+      ring.setAttribute('class','gring gring-'+k); ring.style.opacity=0;
+      gsvg.appendChild(ring); gRingEl[k]=ring;
+      const c=document.createElementNS(NS,'circle');
+      c.setAttribute('cx',n.x); c.setAttribute('cy',n.y); c.setAttribute('r',5.5);
+      c.setAttribute('class','gnode gnode-'+k); c.style.opacity=0.34;
+      gsvg.appendChild(c); gNodeEl[k]=c;
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',n.x+n.lx); t.setAttribute('y',n.y+n.ly);
+      t.setAttribute('text-anchor',n.anchor); t.setAttribute('class','glabel');
+      t.textContent=k;
+      gsvg.appendChild(t);
+    });
+  })();
+
+  function gEdgeKey(a,b){ return gEdgeEl[a+'~'+b] ? a+'~'+b : (gEdgeEl[b+'~'+a] ? b+'~'+a : null); }
+  function gTouchNode(a){ if(G.nodes[a]) gTs.nodes[a]=performance.now(); }
+  function gTouchEdge(a,b){ const k=gEdgeKey(a,b); if(k) gTs.edges[k]=performance.now(); }
+  function gReset(){ gTs.nodes={}; gTs.edges={}; }
+  function gLevel(ts){
+    if(!ts) return 0;
+    const dt=performance.now()-ts, A=1700, F=1200;
+    if(dt<A) return 1;
+    if(dt<A+F) return 1-(dt-A)/F;
+    return 0;
+  }
+  function gPaint(){
+    for(const k in gNodeEl){
+      const lv=gLevel(gTs.nodes[k]);
+      gNodeEl[k].style.opacity=(0.34+0.66*lv).toFixed(3);
+      gNodeEl[k].classList.toggle('awake', lv>0.55);
+      gRingEl[k].style.opacity=(0.45*lv).toFixed(3);
+      gRingEl[k].setAttribute('r',(6+7*lv).toFixed(2));
+    }
+    for(const id in gEdgeEl){
+      const lv=gLevel(gTs.edges[id]), e=gEdgeEl[id];
+      e.style.strokeOpacity=(0.35+0.65*lv).toFixed(3);
+      e.style.strokeWidth=(1+2.4*lv).toFixed(2);
+      e.style.stroke = lv>0.05 ? 'var(--accent)' : '';
+      e.classList.toggle('flow', lv>0.05);
+    }
+  }
+  setInterval(gPaint,70);
+
+  function graphEvent(ev){
+    if(!ev || (Date.now()/1000 - (ev.t||0) > 5)) return; // skip replayed history
+    const a=ev.agent;
+    switch(ev.kind){
+      case 'run_requested': gReset(); return;
+      case 'analysts_dispatched':
+        gTouchNode('orchestrator');
+        ['fundamentals','sentiment','indicators'].forEach(x=>gTouchEdge('orchestrator',x));
+        return;
+      case 'analyst_report':{
+        const n=(ev.name||'').toLowerCase();
+        gTouchNode(n); gTouchEdge('orchestrator',n); return;
+      }
+      case 'brief':
+        gTouchNode('orchestrator'); gTouchNode('trader'); gTouchEdge('orchestrator','trader'); return;
+      case 'day_complete': gTouchNode('trader'); return;
+      case 'portfolio_context': gTouchNode('orchestrator'); return;
+    }
+    if(a) gTouchNode(a);
+    if(ev.kind==='tool_call'){
+      if(ev.tool==='consult_risk_manager'){ gTouchNode('risk'); gTouchEdge('trader','risk'); }
+      else if(ev.tool==='collect_analyst_reports'){ ['fundamentals','sentiment','indicators'].forEach(x=>gTouchEdge('orchestrator',x)); }
+      else if(ev.tool==='buy_stock'||ev.tool==='sell_stock'){ gTouchNode('market'); gTouchEdge('trader','market'); }
+    }
+    if(a==='risk' && (ev.kind==='message'||ev.kind==='tool_end')) gTouchEdge('trader','risk');
+    if((a==='fundamentals'||a==='sentiment'||a==='indicators') && ev.kind==='message') gTouchEdge('orchestrator',a);
+  }
+
+  document.getElementById('graphtoggle').addEventListener('click',()=>{
+    const w=document.getElementById('graphwrap');
+    w.classList.toggle('collapsed');
+    document.getElementById('graphtoggle').textContent =
+      (w.classList.contains('collapsed')?'▸':'▾') + ' agent graph';
+  });
 
   function card(ev, {cls='', title='', body='', mono=false}={}){
     const c = el('div','card '+(ev.agent?('a-'+ev.agent):'')+' '+cls);
@@ -225,6 +412,12 @@
     if(seen.has(ev.seq)) return;
     seen.add(ev.seq);
     events.push(ev);
+    graphEvent(ev);
+    if(['metrics','portfolio'].includes(document.body.dataset.tab) &&
+       ['metrics_reset','day_complete','pipeline_stopped'].includes(ev.kind) &&
+       (Date.now()/1000 - (ev.t||0) < 10)){
+      loadData();
+    }
     const n = nodeFor(ev);
     if(n){
       const stick = nearBottom();
@@ -232,6 +425,266 @@
       if(stick) window.scrollTo(0, document.body.scrollHeight);
     }
   }
+
+  // ---------------- data tabs: metrics + portfolio ----------------
+  const metricsEl   = document.getElementById('metrics');
+  const portfolioEl = document.getElementById('portfolio');
+  const pidInput    = document.getElementById('pid');
+  const pidStatus   = document.getElementById('pidstatus');
+  let dataTimer = null, dataInflight = false;
+
+  const MLABEL = {
+    cumulative_return:'Cumulative Return', sharpe_ratio:'Sharpe Ratio',
+    max_drawdown:'Max Drawdown', win_rate:'Win Rate', avg_trade_pnl:'Avg Trade P&L',
+  };
+  const pct     = v => v==null ? 'n/a' : (v*100).toFixed(2)+'%';
+  const money   = v => '$'+Number(v||0).toLocaleString(undefined,{maximumFractionDigits:0});
+  const signCls = v => (v==null||v===0) ? 'dim' : (v>0 ? 'pos' : 'neg');
+  const MFMT = {
+    cumulative_return: v => [pct(v), signCls(v)],
+    sharpe_ratio:      v => v==null ? ['n/a','dim'] : [v.toFixed(2), signCls(v)],
+    max_drawdown:      v => [pct(v), (v!=null && v<0) ? 'neg' : 'dim'],
+    win_rate:          v => v==null ? ['n/a','dim'] : [(v*100).toFixed(1)+'%', v>=0.5 ? 'pos' : 'neg'],
+    avg_trade_pnl:     v => v==null ? ['n/a','dim'] : [(v>=0?'+':'')+'$'+v.toFixed(2), signCls(v)],
+  };
+
+  function metricCard(label, text, cls){
+    const c = el('div','mcard');
+    c.appendChild(el('div','k', label));
+    c.appendChild(el('div','v '+cls, text));
+    return c;
+  }
+  function section(title){
+    const s = el('div','msection');
+    s.appendChild(el('h3', null, title));
+    return s;
+  }
+  function table(headers){
+    const t = el('table','mt');
+    const tr = el('tr');
+    headers.forEach(h => tr.appendChild(el('th', null, h)));
+    t.appendChild(tr);
+    return t;
+  }
+
+  function equitySvg(curve, initial){
+    if(!curve || curve.length < 2) return null;
+    const W=600, H=150, P=10;
+    const eq = curve.map(p => +p.equity);
+    let lo = Math.min(initial, ...eq), hi = Math.max(initial, ...eq);
+    if(hi===lo){ hi+=1; lo-=1; }
+    const X = i => P + i*(W-2*P)/(curve.length-1);
+    const Y = v => H-P - (v-lo)*(H-2*P)/(hi-lo);
+    const line = eq.map((v,i) => X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+    const area = P+','+(H-P)+' '+line+' '+(W-P)+','+(H-P);
+    const base = Y(initial).toFixed(1);
+    const col = eq[eq.length-1] >= initial ? 'var(--fundamentals)' : 'var(--risk)';
+    return '<svg id="equity" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
+      + '<polyline points="'+area+'" fill="'+col+'" fill-opacity="0.10"/>'
+      + '<line x1="'+P+'" y1="'+base+'" x2="'+(W-P)+'" y2="'+base+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>'
+      + '<polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2"/></svg>';
+  }
+
+  // FIFO: residual open lots per ticker after matching sells against buys
+  function openLots(fills){
+    const lots = {};
+    for(const f of fills || []){
+      const t = f.ticker;
+      (lots[t] = lots[t] || []);
+      if(String(f.action).toUpperCase() === 'BUY'){
+        lots[t].push({qty:+f.quantity, price:+f.price});
+      } else {
+        let rem = +f.quantity;
+        while(rem > 1e-9 && lots[t].length){
+          const lot = lots[t][0];
+          const m = Math.min(lot.qty, rem);
+          lot.qty -= m; rem -= m;
+          if(lot.qty <= 1e-9) lots[t].shift();
+        }
+      }
+    }
+    return lots;
+  }
+  function holdings(fills, lastPrices){
+    const lots = openLots(fills), rows = [];
+    for(const t in lots){
+      const qty  = lots[t].reduce((s,l)=>s+l.qty, 0);
+      if(qty <= 1e-9) continue;
+      const cost = lots[t].reduce((s,l)=>s+l.qty*l.price, 0);
+      const last = (lastPrices && lastPrices[t] != null) ? +lastPrices[t] : null;
+      const mkt  = last != null ? qty*last : null;
+      const upnl = mkt != null ? mkt - cost : null;
+      rows.push({ticker:t, qty, avg:cost/qty, last, mkt,
+                 upnl, upnlPct:(upnl!=null && cost) ? upnl/cost : null});
+    }
+    return rows;
+  }
+
+  function renderMetrics(data){
+    const m = data.metrics || {};
+    const initial = m.initial_capital != null ? m.initial_capital : 100000;
+    metricsEl.innerHTML = '';
+
+    const cards = el('div','mcards');
+    for(const key of ['cumulative_return','sharpe_ratio','max_drawdown','win_rate','avg_trade_pnl']){
+      const [text, cls] = MFMT[key](m[key] == null ? null : +m[key]);
+      cards.appendChild(metricCard(MLABEL[key], text, cls));
+    }
+    metricsEl.appendChild(cards);
+
+    const sub = el('div','msub');
+    [['equity', money(m.equity)], ['cash', money(m.cash)], ['initial', money(initial)],
+     ['fills', m.num_fills ?? 0], ['closed trades', m.num_closed_trades ?? 0]
+    ].forEach(([k,v])=>{
+      const chip = el('span','chip');
+      chip.appendChild(el('span','k', k));
+      chip.appendChild(document.createTextNode(String(v)));
+      sub.appendChild(chip);
+    });
+    metricsEl.appendChild(sub);
+
+    const eqSec = section('Equity curve');
+    const svg = equitySvg(data.equity_curve, initial);
+    if(svg){
+      const wrap = el('div'); wrap.innerHTML = svg; eqSec.appendChild(wrap.firstChild);
+      const c = data.equity_curve, cap = el('div','eqcap');
+      cap.appendChild(el('span', null, c[0].date+'  '+money(c[0].equity)));
+      cap.appendChild(el('span', null, '– – initial '+money(initial)));
+      cap.appendChild(el('span', null, c[c.length-1].date+'  '+money(c[c.length-1].equity)));
+      eqSec.appendChild(cap);
+    } else {
+      eqSec.appendChild(el('div','mempty','No equity curve yet — no trades or daily marks for this run.'));
+    }
+    metricsEl.appendChild(eqSec);
+
+    const trSec = section('Closed trades  (Win Rate / Avg Trade P&L are computed over these)');
+    const trades = data.closed_trades || [];
+    if(!trades.length){
+      trSec.appendChild(el('div','mempty','No closed round-trip trades yet.'));
+    } else {
+      const t = table(['ticker','opened','closed','qty','entry','exit','P&L']);
+      trades.forEach(x=>{
+        const pnl = +x.pnl, row = el('tr');
+        row.appendChild(el('td',null,x.ticker));
+        row.appendChild(el('td',null,x.open_date));
+        row.appendChild(el('td',null,x.close_date));
+        row.appendChild(el('td',null,(+x.quantity).toFixed(0)));
+        row.appendChild(el('td',null,(+x.entry_price).toFixed(2)));
+        row.appendChild(el('td',null,(+x.exit_price).toFixed(2)));
+        row.appendChild(el('td', pnl>0?'pos':(pnl<0?'neg':''), (pnl>=0?'+':'')+pnl.toFixed(2)));
+        t.appendChild(row);
+      });
+      trSec.appendChild(t);
+    }
+    metricsEl.appendChild(trSec);
+  }
+
+  function renderPortfolio(data){
+    const m = data.metrics || {};
+    const cash = +m.cash || 0, equity = +m.equity || 0;
+    const posVal = equity - cash;
+    const initial = m.initial_capital != null ? m.initial_capital : 100000;
+    portfolioEl.innerHTML = '';
+
+    const cards = el('div','mcards');
+    cards.appendChild(metricCard('Equity', money(equity), signCls(equity - initial)));
+    cards.appendChild(metricCard('Cash', money(cash), 'dim'));
+    cards.appendChild(metricCard('Positions Value', money(posVal), posVal > 0 ? 'pos' : 'dim'));
+    cards.appendChild(metricCard('Cumulative Return', pct(m.cumulative_return),
+                                 signCls(m.cumulative_return == null ? null : +m.cumulative_return)));
+    portfolioEl.appendChild(cards);
+
+    const hSec = section('Holdings');
+    const rows = holdings(data.fills, data.last_prices);
+    if(!rows.length){
+      hSec.appendChild(el('div','mempty','No open positions — the portfolio is all cash.'));
+    } else {
+      const t = table(['ticker','shares','avg cost','last','mkt value','unrealized P&L']);
+      rows.forEach(r=>{
+        const tr = el('tr');
+        tr.appendChild(el('td',null,r.ticker));
+        tr.appendChild(el('td',null,r.qty.toFixed(0)));
+        tr.appendChild(el('td',null,r.avg.toFixed(2)));
+        tr.appendChild(el('td',null, r.last != null ? r.last.toFixed(2) : '—'));
+        tr.appendChild(el('td',null, r.mkt  != null ? money(r.mkt)     : '—'));
+        const u = r.upnl;
+        tr.appendChild(el('td', u==null ? '' : (u>0?'pos':(u<0?'neg':'')),
+          u==null ? '—'
+                  : (u>=0?'+':'') + u.toFixed(2)
+                    + (r.upnlPct!=null ? '  ('+(r.upnlPct*100).toFixed(1)+'%)' : '')));
+        t.appendChild(tr);
+      });
+      hSec.appendChild(t);
+    }
+    portfolioEl.appendChild(hSec);
+
+    const oSec = section('Orders  (executed fills, newest first)');
+    const fills = (data.fills || []).slice().reverse();
+    if(!fills.length){
+      oSec.appendChild(el('div','mempty','No orders yet.'));
+    } else {
+      const t = table(['date','action','ticker','qty','price','notional']);
+      fills.forEach(f=>{
+        const tr = el('tr'), buy = String(f.action).toUpperCase()==='BUY';
+        tr.appendChild(el('td',null,f.date));
+        tr.appendChild(el('td', buy?'pos':'neg', f.action));
+        tr.appendChild(el('td',null,f.ticker));
+        tr.appendChild(el('td',null,(+f.quantity).toFixed(0)));
+        tr.appendChild(el('td',null,(+f.price).toFixed(2)));
+        tr.appendChild(el('td',null, money((+f.quantity)*(+f.price))));
+        t.appendChild(tr);
+      });
+      oSec.appendChild(t);
+    }
+    portfolioEl.appendChild(oSec);
+  }
+
+  function renderDataError(msg){
+    const target = document.body.dataset.tab === 'portfolio' ? portfolioEl : metricsEl;
+    target.innerHTML = '';
+    target.appendChild(el('div','mempty','⚠ '+msg+'  — is the broker server (port 5000) running?'));
+  }
+
+  async function loadData(){
+    const tab = document.body.dataset.tab;
+    if(tab !== 'metrics' && tab !== 'portfolio') return;
+    if(dataInflight) return;
+    dataInflight = true;
+    const pid = (pidInput.value || 'agent').trim() || 'agent';
+    try{
+      const r = await fetch('/metrics?portfolio_id='+encodeURIComponent(pid));
+      const data = await r.json().catch(()=>({error:'bad response'}));
+      if(!r.ok || data.error){ renderDataError(data.error || ('HTTP '+r.status)); }
+      else {
+        (document.body.dataset.tab === 'portfolio' ? renderPortfolio : renderMetrics)(data);
+        pidStatus.textContent = 'updated '+new Date().toLocaleTimeString([], {hour12:false});
+      }
+    }catch(e){
+      renderDataError(String(e));
+    }finally{
+      dataInflight = false;
+    }
+  }
+
+  function startPoll(){ stopPoll(); dataTimer = setInterval(loadData, 3000); }
+  function stopPoll(){ if(dataTimer){ clearInterval(dataTimer); dataTimer = null; } }
+
+  pidInput.addEventListener('keydown', e => { if(e.key==='Enter') loadData(); });
+  document.getElementById('pidrefresh').addEventListener('click', loadData);
+
+  document.body.dataset.tab = 'stream';
+  document.querySelectorAll('#tabs button[data-tab]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const tab = b.dataset.tab;
+      document.body.dataset.tab = tab;
+      document.querySelectorAll('#tabs button[data-tab]').forEach(x=>x.classList.toggle('active', x===b));
+      feed.hidden = tab !== 'stream';
+      metricsEl.hidden = tab !== 'metrics';
+      portfolioEl.hidden = tab !== 'portfolio';
+      if(tab === 'metrics' || tab === 'portfolio'){ loadData(); startPoll(); }
+      else stopPoll();
+    });
+  });
 
   // -------- websocket ----------
   function connect(){
@@ -245,7 +698,7 @@
   // -------- run ----------
   runBtn.addEventListener('click', async ()=>{
     runBtn.disabled = true;
-    events.length = 0; seen.clear(); feed.innerHTML='';
+    events.length = 0; seen.clear(); feed.innerHTML=''; gReset();
     const payload = {
       ticker: document.getElementById('ticker').value,
       start_date: document.getElementById('start').value,
