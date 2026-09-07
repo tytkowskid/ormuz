@@ -20,7 +20,7 @@
   header h1{font-size:14px;margin:0 8px 0 0;font-weight:700;letter-spacing:.3px}
   header input{background:var(--panel2);border:1px solid var(--line);color:var(--text);
                border-radius:6px;padding:5px 8px;font:inherit}
-  header input#ticker{width:74px;text-transform:uppercase}
+  header input#ticker{width:150px;text-transform:uppercase}
   header input#start{width:120px}
   header input#days{width:52px}
   header input#model{width:180px}
@@ -123,7 +123,7 @@
 <div id="top">
 <header>
   <h1>ORMUZ · LIVE AGENTS</h1>
-  <input id="ticker" value="TSLA" title="Ticker">
+  <input id="ticker" value="TSLA" title="Ticker(s) — comma-separated for multiple, e.g. TSLA,AAPL,MSFT" placeholder="TSLA,AAPL">
   <input id="start" value="2019-06-01" title="Start date (YYYY-MM-DD)">
   <input id="days" type="number" min="1" max="60" value="3" title="Trading days">
   <input id="model" value="openai:gpt-4.1-mini" title="init_chat_model id">
@@ -334,7 +334,7 @@
       case 'pipeline_start':
         return null;
       case 'day_start':
-        return el('div','divider', `Day ${ev.date}  ·  exposure ${(100*(ev.exposure||0)).toFixed(1)}%`);
+        return el('div','divider', `Day ${ev.date}${ev.ticker? '  ·  '+ev.ticker : ''}  ·  exposure ${(100*(ev.exposure||0)).toFixed(1)}%`);
       case 'analysts_dispatched':
         return el('div','sys','⇉ dispatching fundamentals · sentiment · indicators (parallel)');
       case 'input':

@@ -245,7 +245,7 @@ class PerformanceTracker:
 
     @property
     def last_prices(self) -> dict[str, float]:
-        """Most recent price seen per ticker (from fills and mark-to-market)."""
+        """Most recent known price per ticker (from fills and/or marks)."""
         return dict(self._last_prices)
 
     def cumulative_return(self) -> float:

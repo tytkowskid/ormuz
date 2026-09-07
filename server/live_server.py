@@ -68,6 +68,9 @@ def _reset_agent_portfolio() -> None:
 def _run_pipeline_thread(ticker: str, start_date: str, num_days: int, model_name: str) -> None:
     from src.agents.orchestrator import run_pipeline
 
+    # `ticker` may be a single symbol ("TSLA") or a comma-separated list
+    # ("TSLA,AAPL,MSFT") — run_pipeline() normalizes it and runs all of them
+    # sequentially each day against one shared "agent" portfolio.
     _reset_agent_portfolio()
     try:
         asyncio.run(run_pipeline(ticker, start_date, num_days, model_name=model_name))
@@ -96,7 +99,8 @@ class RunHandler(tornado.web.RequestHandler):
         except json.JSONDecodeError:
             body = {}
 
-        ticker = (body.get("ticker") or "TSLA").strip().upper()
+        # Accept "TSLA" or "TSLA,AAPL,MSFT" — run_pipeline() splits it.
+        ticker = (body.get("ticker") or body.get("tickers") or "TSLA").strip().upper()
         start_date = (body.get("start_date") or "2019-06-01").strip()
         num_days = int(body.get("num_days") or 3)
         model_name = (body.get("model_name") or "openai:gpt-4.1-mini").strip()
